@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 
     # Our apps
     'tasks',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -67,7 +68,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -142,3 +143,22 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+# ---------------------------------------------------------------
+# Authentication
+# ---------------------------------------------------------------
+
+# Backends Django tries, in order, when someone logs in.
+# 1. EmailBackend: our login page (email + password).
+# 2. ModelBackend: Django's default (username + password), kept so the
+#    admin site can still log in with the username "admin".
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# Where to send users who are not logged in (the URL named "login").
+LOGIN_URL = 'login'
+
+# Where to go after logging in / logging out.
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'login'

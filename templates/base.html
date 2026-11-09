@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Each page can replace the title block. -->
+    <title>{% block title %}Task Manager{% endblock %}</title>
+</head>
+<body>
+    <!-- Navigation: different links for logged-in and logged-out users -->
+    <nav>
+        <strong>Task Manager</strong> |
+        {% if user.is_authenticated %}
+            Hello, {{ user.username }} |
+            <a href="{% url 'home' %}">Home</a> |
+            <!-- Logout must be a POST form (with CSRF token), not a link -->
+            <form method="post" action="{% url 'logout' %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit">Log out</button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}">Log in</a> |
+            <a href="{% url 'register' %}">Register</a>
+        {% endif %}
+    </nav>
+    <hr>
+
+    <!-- One-time messages (e.g. "Welcome, ...!") -->
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <!-- Each page puts its own content here -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

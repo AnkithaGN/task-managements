@@ -8,7 +8,7 @@
     <form method="post">
         {% csrf_token %}
         <!-- Shows every field of the form, with labels and error messages -->
-        {{ form.as_p }}
+        {% include 'includes/form_fields.html' %}
         <button type="submit">Register</button>
     </form>
 

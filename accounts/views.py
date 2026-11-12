@@ -1,14 +1,15 @@
 # ---------------------------------------------------------------
 # accounts/views.py
-# Registration view. (Login and logout use Django's built-in views,
-# configured in accounts/urls.py.)
+# Registration and profile pages. (Login and logout use Django's
+# built-in views, configured in accounts/urls.py.)
 # ---------------------------------------------------------------
 
 from django.contrib import messages
 from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
-from .forms import RegisterForm
+from .forms import ProfileForm, RegisterForm
 
 
 def register(request):
@@ -17,25 +18,37 @@ def register(request):
         return redirect('home')
 
     if request.method == 'POST':
-        # The user submitted the form: fill it with what they typed.
         form = RegisterForm(request.POST)
-
         if form.is_valid():
-            # Create the user in auth_user (password is stored as a HASH).
+            # Create the user (password is stored as a HASH).
             user = form.save()
-
-            # Log the new user in straight away.
-            # backend= is required because we have 2 backends in settings.
+            # Log in straight away. backend= is required because we have 2 backends.
             login(request, user, backend='accounts.backends.EmailBackend')
-
-            # A one-time message shown on the next page.
             messages.success(request, f'Welcome, {user.username}! Your account was created.')
-
-            # Redirect (Post/Redirect/Get): a page refresh will not re-submit the form.
+            # Post/Redirect/Get: a page refresh will not re-submit the form.
             return redirect('home')
     else:
-        # First visit (GET): an empty form.
         form = RegisterForm()
 
-    # Show the page. If the form was invalid, it now contains the error messages.
     return render(request, 'accounts/register.html', {'form': form})
+
+
+@login_required
+def profile(request):
+    # Always the LOGGED-IN user: there is no way to view someone else's profile.
+    return render(request, 'accounts/profile.html')
+
+
+@login_required
+def profile_edit(request):
+    if request.method == 'POST':
+        # instance=request.user -> update the logged-in user, never anyone else.
+        form = ProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile was updated.')
+            return redirect('profile')
+    else:
+        form = ProfileForm(instance=request.user)
+
+    return render(request, 'accounts/profile_form.html', {'form': form})

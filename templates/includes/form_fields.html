@@ -1,0 +1,19 @@
+{% comment %}
+  Draws every field of the "form" variable: label, input, help text, errors.
+  Use it inside a <form>:  {% include 'includes/form_fields.html' %}
+{% endcomment %}
+
+<!-- Errors that belong to the whole form (e.g. "Incorrect email or password.") -->
+{% if form.non_field_errors %}
+    <div class="form-errors" role="alert">{{ form.non_field_errors }}</div>
+{% endif %}
+
+<!-- Hidden fields (if any) -->
+{% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
+<!-- One block per visible field. as_field_group = label + help text + errors + input -->
+{% for field in form.visible_fields %}
+    <div class="field{% if field.errors %} field-error{% endif %}">
+        {{ field.as_field_group }}
+    </div>
+{% endfor %}

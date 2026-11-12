@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------
 # accounts/urls.py
-# Addresses for registration, login and logout.
+# Addresses for registration, login, logout and profile.
 # Full addresses start with /accounts/ (see config/urls.py).
 # ---------------------------------------------------------------
 
@@ -11,10 +11,7 @@ from . import views
 from .forms import EmailLoginForm
 
 urlpatterns = [
-    # /accounts/register/ -> our register view
     path('register/', views.register, name='register'),
-
-    # /accounts/login/ -> Django's built-in LoginView, using our email form
     path(
         'login/',
         auth_views.LoginView.as_view(
@@ -24,7 +21,10 @@ urlpatterns = [
         ),
         name='login',
     ),
-
-    # /accounts/logout/ -> Django's built-in LogoutView (accepts POST only)
+    # LogoutView accepts POST only (protects against forced logout).
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+
+    # Profile: no id in the address -> always the logged-in user.
+    path('profile/', views.profile, name='profile'),
+    path('profile/edit/', views.profile_edit, name='profile_edit'),
 ]

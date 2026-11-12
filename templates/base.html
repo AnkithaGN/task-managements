@@ -2,43 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Makes the page fit phone screens (needed for responsive design on Day 8) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Each page can replace the title block. -->
     <title>{% block title %}Task Manager{% endblock %}</title>
 </head>
 <body>
-    <!-- Navigation: different links for logged-in and logged-out users -->
-    <nav>
-        <strong>Task Manager</strong> |
-        {% if user.is_authenticated %}
-            Hello, {{ user.username }} |
-            <a href="{% url 'home' %}">Home</a> |
-            <a href="{% url 'task_list' %}">My tasks</a> |
-            <a href="{% url 'task_create' %}">New task</a> |
-            <!-- Logout must be a POST form (with CSRF token), not a link -->
-            <form method="post" action="{% url 'logout' %}" style="display:inline">
-                {% csrf_token %}
-                <button type="submit">Log out</button>
-            </form>
-        {% else %}
-            <a href="{% url 'login' %}">Log in</a> |
-            <a href="{% url 'register' %}">Register</a>
+    <!-- header: the top bar of every page -->
+    <header class="site-header">
+        <a class="brand" href="{% url 'home' %}">Task Manager</a>
+
+        <!-- nav: the main navigation links -->
+        <nav class="main-nav" aria-label="Main">
+            {% if user.is_authenticated %}
+                <a href="{% url 'home' %}">Dashboard</a>
+                <a href="{% url 'task_list' %}">My tasks</a>
+                <a href="{% url 'task_create' %}">New task</a>
+                <a href="{% url 'profile' %}">Profile ({{ user.username }})</a>
+                <!-- Logout must be a POST form (with CSRF token), not a link -->
+                <form class="logout-form" method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit">Log out</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}">Log in</a>
+                <a href="{% url 'register' %}">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <!-- main: the unique content of each page -->
+    <main class="container">
+        <!-- One-time messages. message.tags = "success", "error", ... (used by CSS on Day 8) -->
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="message {{ message.tags }}" role="status">{{ message }}</li>
+                {% endfor %}
+            </ul>
         {% endif %}
-    </nav>
-    <hr>
 
-    <!-- One-time messages (e.g. "Welcome, ...!") -->
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-
-    <!-- Each page puts its own content here -->
-    <main>
         {% block content %}{% endblock %}
     </main>
+
+    <!-- footer: the bottom of every page -->
+    <footer class="site-footer">
+        <p>Task Manager · Internship project</p>
+    </footer>
 </body>
 </html>

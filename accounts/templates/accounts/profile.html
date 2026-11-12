@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}My profile | Task Manager{% endblock %}
+
+{% block content %}
+    <h1>My profile</h1>
+
+    <!-- dl = "description list": pairs of a label (dt) and its value (dd) -->
+    <dl>
+        <dt>Username</dt>
+        <dd>{{ user.username }}</dd>
+
+        <dt>Name</dt>
+        <dd>{{ user.get_full_name|default:"Not set" }}</dd>
+
+        <dt>Email</dt>
+        <dd>{{ user.email }}</dd>
+
+        <dt>Member since</dt>
+        <dd>{{ user.date_joined|date:"d M Y" }}</dd>
+    </dl>
+
+    <p><a href="{% url 'profile_edit' %}">Edit profile</a></p>
+{% endblock %}

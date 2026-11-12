@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ task.title }} | Task Manager{% endblock %}
+
+{% block content %}
+    <h1>{{ task.title }}</h1>
+
+    <p><strong>Category:</strong> {{ task.category }}</p>
+    <p><strong>Priority:</strong> {{ task.get_priority_display }}</p>
+    <p><strong>Due date:</strong> {{ task.due_date|date:"d M Y" }}</p>
+    <p><strong>Status:</strong> {{ task.get_status_display }}</p>
+
+    <h2>Description</h2>
+    {{ task.description|default:"No description."|linebreaks }}
+
+    <p><small>Created {{ task.created_at|date:"d M Y, H:i" }} · Updated {{ task.updated_at|date:"d M Y, H:i" }}</small></p>
+
+    <p>
+        <a href="{% url 'task_update' task.pk %}">Edit</a> |
+        <a href="{% url 'task_delete' task.pk %}">Delete</a> |
+        <a href="{% url 'task_list' %}">Back to my tasks</a>
+    </p>
+
+    <!-- Complete / Pending button: POST only -->
+    <form method="post" action="{% url 'task_toggle_status' task.pk %}">
+        {% csrf_token %}
+        <button type="submit">
+            {% if task.status == 'PENDING' %}Mark completed{% else %}Mark pending{% endif %}
+        </button>
+    </form>
+{% endblock %}

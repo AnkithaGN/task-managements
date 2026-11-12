@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Edit task{% else %}New task{% endif %} | Task Manager{% endblock %}
+
+{% block content %}
+    <h1>{% if is_edit %}Edit task{% else %}New task{% endif %}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">{% if is_edit %}Save changes{% else %}Create task{% endif %}</button>
+    </form>
+
+    <p>
+        {% if is_edit %}
+            <a href="{% url 'task_detail' task.pk %}">Cancel</a>
+        {% else %}
+            <a href="{% url 'task_list' %}">Cancel</a>
+        {% endif %}
+    </p>
+{% endblock %}

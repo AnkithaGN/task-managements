@@ -1,17 +1,18 @@
 # ---------------------------------------------------------------
 # tasks/views.py
-# Pages of the tasks app: home, list, detail, create, edit,
+# Pages of the tasks app: dashboard, list, detail, create, edit,
 # delete and complete/pending toggle.
 # EVERY view is login-protected and only touches the user's OWN tasks.
 # ---------------------------------------------------------------
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
-
-from .forms import TaskForm
-from .models import Status, Task
+from .forms import TaskFilterForm, TaskForm
+from .models import Category, Status, Task
 
 
 def get_user_task(request, pk):
@@ -25,15 +26,67 @@ def get_user_task(request, pk):
 
 @login_required
 def home(request):
-    # Placeholder for the dashboard (built on Day 6).
-    return render(request, 'tasks/home.html')
+    """Dashboard: counts, per-category summary and upcoming tasks."""
+    today = timezone.localdate()
+    my_tasks = Task.objects.filter(owner=request.user)
+
+    # aggregate() = ONE database query that returns several totals.
+    # Count('id', filter=Q(...)) counts only rows matching the condition.
+    counts = my_tasks.aggregate(
+        total=Count('id'),
+        pending=Count('id', filter=Q(status=Status.PENDING)),
+        completed=Count('id', filter=Q(status=Status.COMPLETED)),
+        overdue=Count('id', filter=Q(status=Status.PENDING, due_date__lt=today)),
+    )
+
+    # annotate() = add a calculated number to EACH category.
+    # tasks__owner follows the link from Category to its tasks (related_name='tasks').
+    categories = Category.objects.annotate(
+        total=Count('tasks', filter=Q(tasks__owner=request.user)),
+        pending=Count('tasks', filter=Q(tasks__owner=request.user, tasks__status=Status.PENDING)),
+        completed=Count('tasks', filter=Q(tasks__owner=request.user, tasks__status=Status.COMPLETED)),
+    )
+
+    # Next 5 pending tasks (soonest due date first, so overdue ones come first).
+    upcoming = my_tasks.filter(status=Status.PENDING).select_related('category')[:5]
+
+    return render(request, 'tasks/home.html', {
+        'counts': counts,
+        'categories': categories,
+        'upcoming': upcoming,
+    })
 
 
 @login_required
 def task_list(request):
-    # Only this user's tasks. select_related loads categories in the same query.
+    """My tasks, with search by title and filters (any combination)."""
+    # Start with ONLY this user's tasks. Every filter below narrows this further.
     tasks = Task.objects.filter(owner=request.user).select_related('category')
-    return render(request, 'tasks/task_list.html', {'tasks': tasks})
+
+    # Filters arrive in the address: /tasks/?q=report&category=2&priority=HIGH
+    # request.GET holds them. The form validates them.
+    filter_form = TaskFilterForm(request.GET)
+    filter_form.is_valid()           # runs the checks; invalid values are left out
+    data = filter_form.cleaned_data  # only the VALID filter values
+
+    if data.get('q'):
+        # icontains = "contains", ignoring upper/lower case.
+        tasks = tasks.filter(title__icontains=data['q'])
+    if data.get('category'):
+        tasks = tasks.filter(category=data['category'])
+    if data.get('priority'):
+        tasks = tasks.filter(priority=data['priority'])
+    if data.get('status'):
+        tasks = tasks.filter(status=data['status'])
+
+    # True if the user typed or chose any filter (used for the "no results" message).
+    is_filtered = any(request.GET.get(name) for name in ['q', 'category', 'priority', 'status'])
+
+    return render(request, 'tasks/task_list.html', {
+        'tasks': tasks,
+        'filter_form': filter_form,
+        'is_filtered': is_filtered,
+    })
 
 
 @login_required

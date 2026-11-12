@@ -10,6 +10,9 @@ from django.conf import settings
 # Django's tools for building models: field types, Model, Q, constraints.
 from django.db import models
 
+# Today's date in India time (TIME_ZONE = 'Asia/Kolkata').
+from django.utils import timezone
+
 
 # ---------------------------------------------------------------
 # FIXED CHOICE LISTS
@@ -121,3 +124,10 @@ class Task(models.Model):
     # How a task is shown as text: its title.
     def __str__(self):
         return self.title
+
+    # @property = use it like a field: task.is_overdue (no brackets).
+    # It is CALCULATED each time, not stored in the database (no migration needed).
+    @property
+    def is_overdue(self):
+        """True when the task is still pending and its due date has passed."""
+        return self.status == Status.PENDING and self.due_date < timezone.localdate()

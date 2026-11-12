@@ -1,12 +1,13 @@
 # ---------------------------------------------------------------
 # tasks/forms.py
-# Form used to create and edit tasks, with the due-date rules.
+# TaskForm:       create / edit a task, with the due-date rules.
+# TaskFilterForm: search and filters on the "My tasks" page.
 # ---------------------------------------------------------------
 
 from django import forms
 from django.utils import timezone
 
-from .models import Task
+from .models import Category, Priority, Status, Task
 
 
 class TaskForm(forms.ModelForm):
@@ -14,7 +15,6 @@ class TaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        # Only these fields appear in the form.
         # owner  -> set by the view from the logged-in user (security).
         # status -> changed only by the Complete / Pending button.
         fields = ['title', 'description', 'due_date', 'priority', 'category']
@@ -32,7 +32,6 @@ class TaskForm(forms.ModelForm):
 
         # Rule 5: editing an existing task and the date was NOT changed
         # -> keep it, even if it is now in the past.
-        # self.instance.pk is None for a NEW task, and a number for an existing one.
         if self.instance.pk and due_date == self.instance.due_date:
             return due_date
 
@@ -41,3 +40,29 @@ class TaskForm(forms.ModelForm):
             raise forms.ValidationError('Due date cannot be in the past.')
 
         return due_date
+
+
+class TaskFilterForm(forms.Form):
+    """Search and filters. Every field is optional: empty = no filter."""
+
+    # forms.Form (not ModelForm): it is not saved anywhere, it only validates the filters.
+    q = forms.CharField(
+        required=False,
+        max_length=200,
+        label='Search title',
+    )
+    # ModelChoiceField: the value must be the id of an existing Category.
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.all(),
+        required=False,
+        empty_label='All categories',
+    )
+    # ChoiceField: the value must be one of these choices. '' = "All".
+    priority = forms.ChoiceField(
+        choices=[('', 'All priorities')] + Priority.choices,
+        required=False,
+    )
+    status = forms.ChoiceField(
+        choices=[('', 'All statuses')] + Status.choices,
+        required=False,
+    )

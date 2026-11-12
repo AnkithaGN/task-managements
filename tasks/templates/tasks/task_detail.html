@@ -7,7 +7,8 @@
 
     <p><strong>Category:</strong> {{ task.category }}</p>
     <p><strong>Priority:</strong> {{ task.get_priority_display }}</p>
-    <p><strong>Due date:</strong> {{ task.due_date|date:"d M Y" }}</p>
+    <p><strong>Due date:</strong> {{ task.due_date|date:"d M Y" }}
+        {% if task.is_overdue %}<strong>(OVERDUE)</strong>{% endif %}</p>
     <p><strong>Status:</strong> {{ task.get_status_display }}</p>
 
     <h2>Description</h2>

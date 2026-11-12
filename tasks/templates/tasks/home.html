@@ -1,9 +1,54 @@
 {% extends 'base.html' %}
 
-{% block title %}Home | Task Manager{% endblock %}
+{% block title %}Dashboard | Task Manager{% endblock %}
 
 {% block content %}
-    <h1>Welcome, {{ user.username }}</h1>
-    <p>Logged in as {{ user.email }}</p>
-    <p>Your dashboard will appear here (Day 6).</p>
+    <h1>Dashboard</h1>
+    <p>Welcome, {{ user.username }}!</p>
+
+    <!-- Summary counts -->
+    <h2>Summary</h2>
+    <table border="1" cellpadding="6">
+        <tr><th>Total tasks</th><th>Pending</th><th>Completed</th><th>Overdue</th></tr>
+        <tr>
+            <td>{{ counts.total }}</td>
+            <td>{{ counts.pending }}</td>
+            <td>{{ counts.completed }}</td>
+            <td>{{ counts.overdue }}</td>
+        </tr>
+    </table>
+
+    <!-- Tasks grouped by category -->
+    <h2>By category</h2>
+    <table border="1" cellpadding="6">
+        <tr><th>Category</th><th>Total</th><th>Pending</th><th>Completed</th></tr>
+        {% for category in categories %}
+            <tr>
+                <!-- Link opens the task list filtered to this category (filters come in Step 2) -->
+                <td><a href="{% url 'task_list' %}?category={{ category.pk }}">{{ category.name }}</a></td>
+                <td>{{ category.total }}</td>
+                <td>{{ category.pending }}</td>
+                <td>{{ category.completed }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <!-- Next pending tasks -->
+    <h2>Upcoming tasks</h2>
+    {% if upcoming %}
+        <ul>
+            {% for task in upcoming %}
+                <li>
+                    <a href="{% url 'task_detail' task.pk %}">{{ task.title }}</a>
+                    · {{ task.category }} · {{ task.get_priority_display }}
+                    · due {{ task.due_date|date:"d M Y" }}
+                    {% if task.is_overdue %}<strong>(OVERDUE)</strong>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No pending tasks. <a href="{% url 'task_create' %}">Create a task</a>.</p>
+    {% endif %}
+
+    <p><a href="{% url 'task_list' %}">See all my tasks</a></p>
 {% endblock %}

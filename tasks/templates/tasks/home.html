@@ -4,51 +4,58 @@
 
 {% block content %}
     <h1>Dashboard</h1>
-    <p>Welcome, {{ user.username }}!</p>
+    <p>Welcome, {{ user.get_full_name|default:user.username }}!</p>
 
-    <!-- Summary counts -->
-    <h2>Summary</h2>
-    <table border="1" cellpadding="6">
-        <tr><th>Total tasks</th><th>Pending</th><th>Completed</th><th>Overdue</th></tr>
-        <tr>
-            <td>{{ counts.total }}</td>
-            <td>{{ counts.pending }}</td>
-            <td>{{ counts.completed }}</td>
-            <td>{{ counts.overdue }}</td>
-        </tr>
-    </table>
+    <!-- Summary counts as cards (CSS grid: .stats) -->
+    <section class="stats" aria-label="Task summary">
+        <div class="stat"><span class="stat-number">{{ counts.total }}</span><span class="stat-label">Total tasks</span></div>
+        <div class="stat"><span class="stat-number">{{ counts.pending }}</span><span class="stat-label">Pending</span></div>
+        <div class="stat completed"><span class="stat-number">{{ counts.completed }}</span><span class="stat-label">Completed</span></div>
+        <div class="stat overdue"><span class="stat-number">{{ counts.overdue }}</span><span class="stat-label">Overdue</span></div>
+    </section>
 
     <!-- Tasks grouped by category -->
     <h2>By category</h2>
-    <table border="1" cellpadding="6">
-        <tr><th>Category</th><th>Total</th><th>Pending</th><th>Completed</th></tr>
-        {% for category in categories %}
-            <tr>
-                <!-- Link opens the task list filtered to this category (filters come in Step 2) -->
-                <td><a href="{% url 'task_list' %}?category={{ category.pk }}">{{ category.name }}</a></td>
-                <td>{{ category.total }}</td>
-                <td>{{ category.pending }}</td>
-                <td>{{ category.completed }}</td>
-            </tr>
-        {% endfor %}
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Category</th><th>Total</th><th>Pending</th><th>Completed</th></tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                    <tr>
+                        <!-- Opens My tasks filtered to this category -->
+                        <td><a href="{% url 'task_list' %}?category={{ category.pk }}">{{ category.name }}</a></td>
+                        <td>{{ category.total }}</td>
+                        <td>{{ category.pending }}</td>
+                        <td>{{ category.completed }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <!-- Next pending tasks -->
     <h2>Upcoming tasks</h2>
-    {% if upcoming %}
-        <ul>
-            {% for task in upcoming %}
-                <li>
-                    <a href="{% url 'task_detail' task.pk %}">{{ task.title }}</a>
-                    · {{ task.category }} · {{ task.get_priority_display }}
-                    · due {{ task.due_date|date:"d M Y" }}
-                    {% if task.is_overdue %}<strong>(OVERDUE)</strong>{% endif %}
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No pending tasks. <a href="{% url 'task_create' %}">Create a task</a>.</p>
-    {% endif %}
+    <div class="card">
+        {% if upcoming %}
+            <ul>
+                {% for task in upcoming %}
+                    <li>
+                        <a href="{% url 'task_detail' task.pk %}">{{ task.title }}</a>
+                        <span class="badge badge-{{ task.priority|lower }}">{{ task.get_priority_display }}</span>
+                        {{ task.category }} · due {{ task.due_date|date:"d M Y" }}
+                        {% if task.is_overdue %}<span class="badge badge-overdue">OVERDUE</span>{% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No pending tasks. <a href="{% url 'task_create' %}">Create a task</a>.</p>
+        {% endif %}
+    </div>
 
-    <p><a href="{% url 'task_list' %}">See all my tasks</a></p>
+    <p class="actions">
+        <a class="btn" href="{% url 'task_create' %}">+ New task</a>
+        <a class="btn btn-secondary" href="{% url 'task_list' %}">See all my tasks</a>
+    </p>
 {% endblock %}

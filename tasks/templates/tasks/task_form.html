@@ -5,17 +5,20 @@
 {% block content %}
     <h1>{% if is_edit %}Edit task{% else %}New task{% endif %}</h1>
 
-    <form method="post">
+    <!-- id="task-form" lets app.js find this form.
+         data-original-due-date = the saved date when editing ("" for a new task),
+         so JavaScript follows the same "unchanged old date is allowed" rule as the server. -->
+    <form method="post" id="task-form" class="card form-card"
+          data-original-due-date="{% if is_edit %}{{ task.due_date|date:'Y-m-d' }}{% endif %}">
         {% csrf_token %}
         {% include 'includes/form_fields.html' %}
-        <button type="submit">{% if is_edit %}Save changes{% else %}Create task{% endif %}</button>
+        <div class="actions">
+            <button type="submit">{% if is_edit %}Save changes{% else %}Create task{% endif %}</button>
+            {% if is_edit %}
+                <a class="btn btn-secondary" href="{% url 'task_detail' task.pk %}">Cancel</a>
+            {% else %}
+                <a class="btn btn-secondary" href="{% url 'task_list' %}">Cancel</a>
+            {% endif %}
+        </div>
     </form>
-
-    <p>
-        {% if is_edit %}
-            <a href="{% url 'task_detail' task.pk %}">Cancel</a>
-        {% else %}
-            <a href="{% url 'task_list' %}">Cancel</a>
-        {% endif %}
-    </p>
 {% endblock %}

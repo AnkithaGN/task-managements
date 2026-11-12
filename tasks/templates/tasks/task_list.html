@@ -4,61 +4,69 @@
 
 {% block content %}
     <h1>My tasks</h1>
-    <p><a href="{% url 'task_create' %}">+ New task</a></p>
+    <p class="actions"><a class="btn" href="{% url 'task_create' %}">+ New task</a></p>
 
     <!-- Search and filters. method="get": filters go into the address (?q=...&status=...). -->
-    <form method="get">
-        {{ filter_form.as_p }}
-        <button type="submit">Search / Filter</button>
-        <a href="{% url 'task_list' %}">Clear filters</a>
+    <form method="get" class="card">
+        <div class="filters">
+            {{ filter_form.as_p }}
+            <p>
+                <button type="submit">Search / Filter</button>
+                <a class="btn btn-secondary" href="{% url 'task_list' %}">Clear</a>
+            </p>
+        </div>
     </form>
 
     <p>Showing {{ tasks|length }} task{{ tasks|length|pluralize }}.</p>
 
-    <table border="1" cellpadding="6">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Priority</th>
-                <th>Due date</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for task in tasks %}
+    <!-- table-wrap: on phones the table scrolls sideways inside this box -->
+    <div class="table-wrap">
+        <table>
+            <thead>
                 <tr>
-                    <td><a href="{% url 'task_detail' task.pk %}">{{ task.title }}</a></td>
-                    <td>{{ task.category }}</td>
-                    <td>{{ task.get_priority_display }}</td>
-                    <td>
-                        {{ task.due_date|date:"d M Y" }}
-                        {% if task.is_overdue %}<strong>(OVERDUE)</strong>{% endif %}
-                    </td>
-                    <td>{{ task.get_status_display }}</td>
-                    <td>
-                        <!-- Changing data = POST form with CSRF token -->
-                        <form method="post" action="{% url 'task_toggle_status' task.pk %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="list">
-                            <button type="submit">
-                                {% if task.status == 'PENDING' %}Mark completed{% else %}Mark pending{% endif %}
-                            </button>
-                        </form>
-                    </td>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Due date</th>
+                    <th>Status</th>
+                    <th>Action</th>
                 </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="6">
-                        {% if is_filtered %}
-                            No tasks match your search or filters. <a href="{% url 'task_list' %}">Clear filters</a>.
-                        {% else %}
-                            You have no tasks yet. <a href="{% url 'task_create' %}">Create your first task</a>.
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                    <!-- Row classes let CSS highlight overdue and completed tasks -->
+                    <tr class="{% if task.is_overdue %}is-overdue{% endif %} {% if task.status == 'COMPLETED' %}is-completed{% endif %}">
+                        <td class="title-cell"><a class="task-title" href="{% url 'task_detail' task.pk %}">{{ task.title }}</a></td>
+                        <td>{{ task.category }}</td>
+                        <td><span class="badge badge-{{ task.priority|lower }}">{{ task.get_priority_display }}</span></td>
+                        <td>
+                            {{ task.due_date|date:"d M Y" }}
+                            {% if task.is_overdue %}<span class="badge badge-overdue">OVERDUE</span>{% endif %}
+                        </td>
+                        <td><span class="badge badge-{{ task.status|lower }}">{{ task.get_status_display }}</span></td>
+                        <td>
+                            <!-- Changing data = POST form with CSRF token -->
+                            <form method="post" action="{% url 'task_toggle_status' task.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="list">
+                                <button type="submit" class="btn-small">
+                                    {% if task.status == 'PENDING' %}Mark completed{% else %}Mark pending{% endif %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            {% if is_filtered %}
+                                No tasks match your search or filters. <a href="{% url 'task_list' %}">Clear filters</a>.
+                            {% else %}
+                                You have no tasks yet. <a href="{% url 'task_create' %}">Create your first task</a>.
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% endblock %}

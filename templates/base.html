@@ -1,10 +1,15 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Makes the page fit phone screens (needed for responsive design on Day 8) -->
+    <!-- Makes the page fit phone screens (needed for responsive design) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Task Manager{% endblock %}</title>
+    <!-- Site styles. The static tag builds the address /static/tasks/css/style.css -->
+    <link rel="stylesheet" href="{% static 'tasks/css/style.css' %}">
+    <!-- defer = run the script after the HTML has loaded -->
+    <script src="{% static 'tasks/js/app.js' %}" defer></script>
 </head>
 <body>
     <!-- header: the top bar of every page -->
@@ -32,7 +37,7 @@
 
     <!-- main: the unique content of each page -->
     <main class="container">
-        <!-- One-time messages. message.tags = "success", "error", ... (used by CSS on Day 8) -->
+        <!-- One-time messages. message.tags = "success", "error", ... (colours in CSS) -->
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}

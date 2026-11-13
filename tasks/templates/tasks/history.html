@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}History | Task Manager{% endblock %}
+
+{% block content %}
+    <div class="page-head">
+        <div>
+            <h1>History</h1>
+            <p class="muted">Everything that happened to your tasks, including deleted ones.</p>
+        </div>
+    </div>
+
+    <!-- Filter chips: one link per action. ?action=DELETED shows only deletions. -->
+    <nav class="chips" aria-label="Filter history">
+        <a href="{% url 'history' %}" class="chip {% if not action %}chip-active{% endif %}">All</a>
+        {% for value, label in actions %}
+            <a href="?action={{ value }}" class="chip chip-{{ value|lower }} {% if action == value %}chip-active{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </nav>
+
+    <div class="card">
+        {% if page_obj.paginator.count %}
+            <!-- A vertical timeline: newest first -->
+            <ol class="timeline">
+                {% for item in page_obj %}
+                    <li class="timeline-item act-{{ item.action|lower }}">
+                        <span class="timeline-dot" aria-hidden="true"></span>
+                        <div class="timeline-body">
+                            <span class="badge act-badge-{{ item.action|lower }}">{{ item.get_action_display }}</span>
+                            {# item.task is empty (None) after the task was deleted: then show plain text #}
+                            {% if item.task %}
+                                <a href="{% url 'task_detail' item.task.pk %}" title="{{ item.task_title }}">{{ item.task_title|truncatechars:70 }}</a>
+                            {% else %}
+                                <span class="deleted-title" title="{{ item.task_title }}">{{ item.task_title|truncatechars:70 }}</span>
+                                {% if item.action != 'DELETED' %}<small class="muted">(task deleted later)</small>{% endif %}
+                            {% endif %}
+                            <time class="timeline-time" datetime="{{ item.created_at|date:'c' }}" title="{{ item.created_at|date:'d M Y, H:i' }}">
+                                {{ item.created_at|timesince }} ago
+                            </time>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p class="empty">🕘 No history yet. Create, complete or delete a task and it will appear here.</p>
+        {% endif %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+        <nav class="pagination" aria-label="Pages">
+            {% if page_obj.has_previous %}
+                <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.previous_page_number %}">&laquo; Newer</a>
+            {% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.next_page_number %}">Older &raquo;</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% endblock %}

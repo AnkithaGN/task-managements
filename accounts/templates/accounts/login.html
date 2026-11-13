@@ -1,15 +1,32 @@
 {% extends 'base.html' %}
 
 {% block title %}Log in | Task Manager{% endblock %}
+{% block body_class %}auth-page{% endblock %}
 
 {% block content %}
-    <h1>Log in</h1>
+    <!-- Two panels: colourful welcome on the left, form on the right (stacked on phones) -->
+    <div class="auth-split">
+        <section class="auth-aside">
+            <h2>Plan it. Do it. Done.</h2>
+            <p>Keep every task, deadline and priority in one beautiful place.</p>
+            <ul>
+                <li>✓ Dashboard with progress at a glance</li>
+                <li>✓ Search, filter and sort in seconds</li>
+                <li>✓ Overdue reminders that stand out</li>
+            </ul>
+        </section>
 
-    <form method="post">
-        {% csrf_token %}
-        {% include 'includes/form_fields.html' %}
-        <button type="submit">Log in</button>
-    </form>
+        <section class="auth-card">
+            <h1>Welcome back</h1>
+            <p class="muted">Log in with your email and password.</p>
 
-    <p>New here? <a href="{% url 'register' %}">Create an account</a></p>
+            <form method="post">
+                {% csrf_token %}
+                {% include 'includes/form_fields.html' %}
+                <button type="submit" class="btn-block">Log in</button>
+            </form>
+
+            <p class="auth-switch">New here? <a href="{% url 'register' %}">Create an account</a></p>
+        </section>
+    </div>
 {% endblock %}

@@ -3,25 +3,32 @@
 {% block title %}My tasks | Task Manager{% endblock %}
 
 {% block content %}
-    <h1>My tasks</h1>
-    <p class="actions"><a class="btn" href="{% url 'task_create' %}">+ New task</a></p>
+    <div class="page-head">
+        <div>
+            <h1>My tasks</h1>
+            <p class="muted">Search, filter and sort everything on your plate.</p>
+        </div>
+        <a class="btn" href="{% url 'task_create' %}">+ New task</a>
+    </div>
 
-    <!-- Search and filters. method="get": filters go into the address (?q=...&status=...). -->
-    <form method="get" class="card">
+    <!-- Search, filters and sort. method="get": values go into the address (?q=...&sort=...). -->
+    <form method="get" class="card filter-card">
         <div class="filters">
             {{ filter_form.as_p }}
-            <p>
-                <button type="submit">Search / Filter</button>
+            <p class="filter-buttons">
+                <button type="submit">Apply</button>
                 <a class="btn btn-secondary" href="{% url 'task_list' %}">Clear</a>
             </p>
         </div>
     </form>
 
-    <p>Showing {{ tasks|length }} task{{ tasks|length|pluralize }}.</p>
+    {% if page_obj.paginator.count %}
+        <p class="muted">Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }} of {{ page_obj.paginator.count }} task{{ page_obj.paginator.count|pluralize }}.</p>
+    {% endif %}
 
     <!-- table-wrap: on phones the table scrolls sideways inside this box -->
     <div class="table-wrap">
-        <table>
+        <table class="task-table">
             <thead>
                 <tr>
                     <th>Title</th>
@@ -33,15 +40,19 @@
                 </tr>
             </thead>
             <tbody>
-                {% for task in tasks %}
-                    <!-- Row classes let CSS highlight overdue and completed tasks -->
-                    <tr class="{% if task.is_overdue %}is-overdue{% endif %} {% if task.status == 'COMPLETED' %}is-completed{% endif %}">
-                        <td class="title-cell"><a class="task-title" href="{% url 'task_detail' task.pk %}">{{ task.title }}</a></td>
-                        <td>{{ task.category }}</td>
+                {# page_obj = only the tasks on the current page #}
+                {% for task in page_obj %}
+                    <!-- Row classes: coloured priority stripe, overdue and completed styles -->
+                    <tr class="priority-{{ task.priority|lower }} {% if task.is_overdue %}is-overdue{% endif %} {% if task.status == 'COMPLETED' %}is-completed{% endif %}">
+                        <td class="title-cell">
+                            {# truncatechars shortens long titles; the full title appears on hover (title attribute) #}
+                            <a class="task-title" href="{% url 'task_detail' task.pk %}" title="{{ task.title }}">{{ task.title|truncatechars:60 }}</a>
+                        </td>
+                        <td><span class="badge cat-{{ task.category.name|slugify }}">{{ task.category }}</span></td>
                         <td><span class="badge badge-{{ task.priority|lower }}">{{ task.get_priority_display }}</span></td>
                         <td>
                             {{ task.due_date|date:"d M Y" }}
-                            {% if task.is_overdue %}<span class="badge badge-overdue">OVERDUE</span>{% endif %}
+                            {% if task.due_label %}<br><small class="due {% if task.is_overdue %}due-late{% endif %}">{{ task.due_label }}</small>{% endif %}
                         </td>
                         <td><span class="badge badge-{{ task.status|lower }}">{{ task.get_status_display }}</span></td>
                         <td>
@@ -49,19 +60,19 @@
                             <form method="post" action="{% url 'task_toggle_status' task.pk %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="list">
-                                <button type="submit" class="btn-small">
-                                    {% if task.status == 'PENDING' %}Mark completed{% else %}Mark pending{% endif %}
+                                <button type="submit" class="btn-small {% if task.status == 'COMPLETED' %}btn-secondary{% else %}btn-success{% endif %}">
+                                    {% if task.status == 'PENDING' %}✓ Complete{% else %}↺ Reopen{% endif %}
                                 </button>
                             </form>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="6">
+                        <td colspan="6" class="empty">
                             {% if is_filtered %}
-                                No tasks match your search or filters. <a href="{% url 'task_list' %}">Clear filters</a>.
+                                🔍 No tasks match your search or filters. <a href="{% url 'task_list' %}">Clear filters</a>.
                             {% else %}
-                                You have no tasks yet. <a href="{% url 'task_create' %}">Create your first task</a>.
+                                📝 You have no tasks yet. <a href="{% url 'task_create' %}">Create your first task</a>.
                             {% endif %}
                         </td>
                     </tr>
@@ -69,4 +80,18 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Page links. {% querystring page=... %} keeps the current search, filters and sort
+         in the address and only changes the page number. -->
+    {% if page_obj.has_other_pages %}
+        <nav class="pagination" aria-label="Pages">
+            {% if page_obj.has_previous %}
+                <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.previous_page_number %}">&laquo; Previous</a>
+            {% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.next_page_number %}">Next &raquo;</a>
+            {% endif %}
+        </nav>
+    {% endif %}
 {% endblock %}

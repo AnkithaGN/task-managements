@@ -5,20 +5,25 @@
 {% block content %}
     <h1>My profile</h1>
 
-    <!-- dl = "description list": pairs of a label (dt) and its value (dd) -->
-    <dl>
-        <dt>Username</dt>
-        <dd>{{ user.username }}</dd>
+    <div class="card form-card">
+        <!-- dl = "description list": pairs of a label (dt) and its value (dd) -->
+        <dl>
+            <dt>Username</dt>
+            <dd>{{ user.username }}</dd>
 
-        <dt>Name</dt>
-        <dd>{{ user.get_full_name|default:"Not set" }}</dd>
+            <dt>Name</dt>
+            <dd>{{ user.get_full_name|default:"Not set" }}</dd>
 
-        <dt>Email</dt>
-        <dd>{{ user.email }}</dd>
+            <dt>Email</dt>
+            <dd>{{ user.email }}</dd>
 
-        <dt>Member since</dt>
-        <dd>{{ user.date_joined|date:"d M Y" }}</dd>
-    </dl>
+            <dt>Member since</dt>
+            <dd>{{ user.date_joined|date:"d M Y" }}</dd>
+        </dl>
 
-    <p><a href="{% url 'profile_edit' %}">Edit profile</a></p>
+        <div class="actions">
+            <a class="btn" href="{% url 'profile_edit' %}">Edit profile</a>
+            <a class="btn btn-secondary" href="{% url 'password_change' %}">Change password</a>
+        </div>
+    </div>
 {% endblock %}

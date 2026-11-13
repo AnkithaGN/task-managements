@@ -82,6 +82,19 @@
         });
     });
 
+    // 4. MESSAGES: add a close (x) button to each message.
+    document.querySelectorAll('.message').forEach(function (message) {
+        var close = document.createElement('button');
+        close.type = 'button';                       // not a submit button
+        close.className = 'message-close';
+        close.setAttribute('aria-label', 'Close message');
+        close.textContent = '×';                // the x symbol
+        close.addEventListener('click', function () {
+            message.remove();
+        });
+        message.appendChild(close);
+    });
+
     // ---------- helper functions ----------
 
     // Today's date as "YYYY-MM-DD" in the user's own time zone.

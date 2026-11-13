@@ -3,59 +3,94 @@
 {% block title %}Dashboard | Task Manager{% endblock %}
 
 {% block content %}
-    <h1>Dashboard</h1>
-    <p>Welcome, {{ user.get_full_name|default:user.username }}!</p>
-
-    <!-- Summary counts as cards (CSS grid: .stats) -->
-    <section class="stats" aria-label="Task summary">
-        <div class="stat"><span class="stat-number">{{ counts.total }}</span><span class="stat-label">Total tasks</span></div>
-        <div class="stat"><span class="stat-number">{{ counts.pending }}</span><span class="stat-label">Pending</span></div>
-        <div class="stat completed"><span class="stat-number">{{ counts.completed }}</span><span class="stat-label">Completed</span></div>
-        <div class="stat overdue"><span class="stat-number">{{ counts.overdue }}</span><span class="stat-label">Overdue</span></div>
+    <!-- Hero banner: greeting, today's date and overall progress -->
+    <section class="hero">
+        <div class="hero-text">
+            <p class="hero-date">{% now "l, d F Y" %}</p>
+            <h1>Hello, {{ user.get_full_name|default:user.username }} 👋</h1>
+            <p>
+                {% if counts.pending %}
+                    You have <strong>{{ counts.pending }}</strong> pending task{{ counts.pending|pluralize }}{% if counts.overdue %}, <strong>{{ counts.overdue }}</strong> overdue{% endif %}.
+                {% else %}
+                    You're all caught up. Great job!
+                {% endif %}
+            </p>
+            <a class="btn btn-light" href="{% url 'task_create' %}">+ New task</a>
+        </div>
+        <!-- Completion progress -->
+        <div class="hero-progress" aria-label="Progress">
+            <span class="hero-percent">{{ percent_done }}%</span>
+            <span>completed</span>
+            <div class="progress progress-light" role="progressbar" aria-valuenow="{{ percent_done }}" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar" style="width: {{ percent_done }}%"></div>
+            </div>
+            <small>{{ counts.completed }} of {{ counts.total }} tasks done</small>
+        </div>
     </section>
 
-    <!-- Tasks grouped by category -->
-    <h2>By category</h2>
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr><th>Category</th><th>Total</th><th>Pending</th><th>Completed</th></tr>
-            </thead>
-            <tbody>
+    <!-- Summary counts as cards (CSS grid: .stats). Each card opens the matching filtered list. -->
+    <section class="stats" aria-label="Task summary">
+        <a class="stat stat-total" href="{% url 'task_list' %}">
+            <span class="stat-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            </span>
+            <span><span class="stat-number">{{ counts.total }}</span><span class="stat-label">Total tasks</span></span>
+        </a>
+        <a class="stat stat-pending" href="{% url 'task_list' %}?status=PENDING">
+            <span class="stat-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            </span>
+            <span><span class="stat-number">{{ counts.pending }}</span><span class="stat-label">Pending</span></span>
+        </a>
+        <a class="stat stat-completed" href="{% url 'task_list' %}?status=COMPLETED">
+            <span class="stat-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
+            </span>
+            <span><span class="stat-number">{{ counts.completed }}</span><span class="stat-label">Completed</span></span>
+        </a>
+        <div class="stat stat-overdue">
+            <span class="stat-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+            </span>
+            <span><span class="stat-number">{{ counts.overdue }}</span><span class="stat-label">Overdue</span></span>
+        </div>
+    </section>
+
+    <div class="two-columns">
+        <!-- Tasks grouped by category, as coloured cards with their own progress -->
+        <section>
+            <h2>By category</h2>
+            <div class="category-list">
                 {% for category in categories %}
-                    <tr>
-                        <!-- Opens My tasks filtered to this category -->
-                        <td><a href="{% url 'task_list' %}?category={{ category.pk }}">{{ category.name }}</a></td>
-                        <td>{{ category.total }}</td>
-                        <td>{{ category.pending }}</td>
-                        <td>{{ category.completed }}</td>
-                    </tr>
+                    <a class="category-card cat-{{ category.name|slugify }}" href="{% url 'task_list' %}?category={{ category.pk }}">
+                        <span class="category-name">{{ category.name }}</span>
+                        <span class="category-meta">{{ category.pending }} pending · {{ category.completed }} done · {{ category.total }} total</span>
+                        {# widthratio = completed / total * 100 (0 when there are no tasks) #}
+                        <span class="progress progress-thin"><span class="progress-bar" style="width: {% widthratio category.completed category.total 100 %}%"></span></span>
+                    </a>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
+            </div>
+        </section>
 
-    <!-- Next pending tasks -->
-    <h2>Upcoming tasks</h2>
-    <div class="card">
-        {% if upcoming %}
-            <ul>
-                {% for task in upcoming %}
-                    <li>
-                        <a href="{% url 'task_detail' task.pk %}">{{ task.title }}</a>
-                        <span class="badge badge-{{ task.priority|lower }}">{{ task.get_priority_display }}</span>
-                        {{ task.category }} · due {{ task.due_date|date:"d M Y" }}
-                        {% if task.is_overdue %}<span class="badge badge-overdue">OVERDUE</span>{% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No pending tasks. <a href="{% url 'task_create' %}">Create a task</a>.</p>
-        {% endif %}
+        <!-- Next pending tasks -->
+        <section>
+            <h2>Upcoming tasks</h2>
+            <div class="card">
+                {% if upcoming %}
+                    <ul class="task-mini-list">
+                        {% for task in upcoming %}
+                            <li>
+                                <span class="dot dot-{{ task.priority|lower }}" title="{{ task.get_priority_display }} priority"></span>
+                                <a href="{% url 'task_detail' task.pk %}" title="{{ task.title }}">{{ task.title|truncatechars:45 }}</a>
+                                <small class="due {% if task.is_overdue %}due-late{% endif %}">{{ task.due_label }}</small>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="empty">🎉 No pending tasks. <a href="{% url 'task_create' %}">Create a task</a>.</p>
+                {% endif %}
+                <p class="card-link"><a href="{% url 'task_list' %}">View all tasks &rarr;</a></p>
+            </div>
+        </section>
     </div>
-
-    <p class="actions">
-        <a class="btn" href="{% url 'task_create' %}">+ New task</a>
-        <a class="btn btn-secondary" href="{% url 'task_list' %}">See all my tasks</a>
-    </p>
 {% endblock %}

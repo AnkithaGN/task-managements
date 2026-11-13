@@ -7,7 +7,7 @@
 from django.contrib import admin
 
 # The dot means "from this same app folder" (tasks/models.py).
-from .models import Category, Task
+from .models import Category, Task, TaskActivity
 
 
 # @admin.register(Category) = "show the Category model in the admin,
@@ -29,3 +29,15 @@ class TaskAdmin(admin.ModelAdmin):
 
     # Adds a search box that searches task titles.
     search_fields = ['title']
+
+
+@admin.register(TaskActivity)
+class TaskActivityAdmin(admin.ModelAdmin):
+    # History is a record of what happened: show it, but do not allow editing it.
+    list_display = ['created_at', 'owner', 'action', 'task_title']
+    list_filter = ['action']
+    search_fields = ['task_title']
+    readonly_fields = ['owner', 'task', 'task_title', 'action', 'created_at']
+
+    def has_add_permission(self, request):
+        return False

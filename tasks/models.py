@@ -31,6 +31,15 @@ class Status(models.TextChoices):
     COMPLETED = 'COMPLETED', 'Completed'
 
 
+class Activity(models.TextChoices):
+    """What happened to a task (used by the History page)."""
+    CREATED = 'CREATED', 'Created'
+    UPDATED = 'UPDATED', 'Updated'
+    COMPLETED = 'COMPLETED', 'Completed'
+    REOPENED = 'REOPENED', 'Reopened'
+    DELETED = 'DELETED', 'Deleted'
+
+
 # ---------------------------------------------------------------
 # CATEGORY MODEL  ->  table "tasks_category"
 # Holds the categories: Personal, Work, Study.
@@ -131,3 +140,75 @@ class Task(models.Model):
     def is_overdue(self):
         """True when the task is still pending and its due date has passed."""
         return self.status == Status.PENDING and self.due_date < timezone.localdate()
+
+    @property
+    def days_left(self):
+        """Whole days from today to the due date (negative = late)."""
+        return (self.due_date - timezone.localdate()).days
+
+    @property
+    def due_label(self):
+        """Friendly text such as 'Due today', 'Due in 3 days' or '2 days overdue'.
+
+        Empty for completed tasks (a finished task is never late).
+        """
+        if self.status == Status.COMPLETED:
+            return ''
+        days = self.days_left
+        if days == 0:
+            return 'Due today'
+        if days == 1:
+            return 'Due tomorrow'
+        if days > 1:
+            return f'Due in {days} days'
+        if days == -1:
+            return '1 day overdue'
+        return f'{-days} days overdue'
+
+
+# ---------------------------------------------------------------
+# TASK ACTIVITY MODEL  ->  table "tasks_taskactivity"
+# One row = one thing that happened to a task (the History page).
+# ---------------------------------------------------------------
+
+class TaskActivity(models.Model):
+    # Whose history this is. Deleting the user deletes their history.
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='task_activities',
+    )
+
+    # Link to the task. SET_NULL: when the task is DELETED, this row is KEPT
+    # and only the link becomes empty (NULL). That is how deleted tasks stay in History.
+    # null=True  -> the database column may be empty.
+    # blank=True -> forms may leave it empty.
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='activities',
+    )
+
+    # A copy of the title at that moment, so History still shows it after deletion.
+    task_title = models.CharField(max_length=200)
+
+    # What happened: Created / Updated / Completed / Reopened / Deleted.
+    action = models.CharField(max_length=10, choices=Activity.choices)
+
+    # When it happened (set automatically).
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']          # newest first
+        verbose_name_plural = 'task activities'
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(action__in=Activity.values),
+                name='taskactivity_action_valid',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.get_action_display()}: {self.task_title}'

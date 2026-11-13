@@ -1,43 +1,55 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ task.title }} | Task Manager{% endblock %}
+{% block title %}{{ task.title|truncatechars:40 }} | Task Manager{% endblock %}
 
 {% block content %}
-    <h1>{{ task.title }}</h1>
+    <p><a class="back-link" href="{% url 'task_list' %}">&larr; Back to my tasks</a></p>
 
-    <div class="card">
-        <p>
+    <article class="card detail-card priority-{{ task.priority|lower }}">
+        <h1>{{ task.title }}</h1>
+        <p class="badge-row">
             <span class="badge badge-{{ task.status|lower }}">{{ task.get_status_display }}</span>
             <span class="badge badge-{{ task.priority|lower }}">{{ task.get_priority_display }} priority</span>
+            <span class="badge cat-{{ task.category.name|slugify }}">{{ task.category }}</span>
             {% if task.is_overdue %}<span class="badge badge-overdue">OVERDUE</span>{% endif %}
         </p>
-        <p><strong>Category:</strong> {{ task.category }}</p>
-        <p><strong>Due date:</strong> {{ task.due_date|date:"d M Y" }}</p>
+
+        <div class="detail-grid">
+            <div>
+                <span class="detail-label">Due date</span>
+                <span>{{ task.due_date|date:"l, d M Y" }}</span>
+                {% if task.due_label %}<small class="due {% if task.is_overdue %}due-late{% endif %}">{{ task.due_label }}</small>{% endif %}
+            </div>
+            <div>
+                <span class="detail-label">Created</span>
+                <span>{{ task.created_at|date:"d M Y, H:i" }}</span>
+            </div>
+            <div>
+                <span class="detail-label">Last updated</span>
+                <span>{{ task.updated_at|timesince }} ago</span>
+            </div>
+        </div>
 
         <h2>Description</h2>
-        {{ task.description|default:"No description."|linebreaks }}
+        <div class="description">{{ task.description|default:"No description."|linebreaks }}</div>
 
-        <p><small>Created {{ task.created_at|date:"d M Y, H:i" }} · Updated {{ task.updated_at|date:"d M Y, H:i" }}</small></p>
-    </div>
+        <div class="actions">
+            <!-- Complete / Pending: POST only -->
+            <form method="post" action="{% url 'task_toggle_status' task.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="{% if task.status == 'PENDING' %}btn-success{% else %}btn-secondary{% endif %}">
+                    {% if task.status == 'PENDING' %}✓ Mark completed{% else %}↺ Mark pending{% endif %}
+                </button>
+            </form>
 
-    <div class="actions">
-        <a class="btn btn-secondary" href="{% url 'task_update' task.pk %}">Edit</a>
+            <a class="btn btn-secondary" href="{% url 'task_update' task.pk %}">Edit</a>
 
-        <!-- Complete / Pending: POST only -->
-        <form method="post" action="{% url 'task_toggle_status' task.pk %}">
-            {% csrf_token %}
-            <button type="submit">
-                {% if task.status == 'PENDING' %}Mark completed{% else %}Mark pending{% endif %}
-            </button>
-        </form>
-
-        <!-- Delete: POST only. data-confirm -> JavaScript asks "Are you sure?" first -->
-        <form method="post" action="{% url 'task_delete' task.pk %}"
-              data-confirm="Delete &quot;{{ task.title }}&quot;? This cannot be undone.">
-            {% csrf_token %}
-            <button type="submit" class="btn-danger">Delete</button>
-        </form>
-
-        <a href="{% url 'task_list' %}">Back to my tasks</a>
-    </div>
+            <!-- Delete: POST only. data-confirm -> JavaScript asks "Are you sure?" first -->
+            <form method="post" action="{% url 'task_delete' task.pk %}"
+                  data-confirm="Delete &quot;{{ task.title|truncatechars:60 }}&quot;? This cannot be undone.">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger">Delete</button>
+            </form>
+        </div>
+    </article>
 {% endblock %}

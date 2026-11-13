@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------
 # tasks/forms.py
 # TaskForm:       create / edit a task, with the due-date rules.
-# TaskFilterForm: search and filters on the "My tasks" page.
+# TaskFilterForm: search, filters and sort order on the "My tasks" page.
 # ---------------------------------------------------------------
 
 from django import forms
@@ -42,8 +42,18 @@ class TaskForm(forms.ModelForm):
         return due_date
 
 
+# Sort options: value in the address -> label shown in the dropdown.
+SORT_CHOICES = [
+    ('due', 'Due date (soonest first)'),
+    ('-due', 'Due date (latest first)'),
+    ('priority', 'Priority (high first)'),
+    ('title', 'Title (A-Z)'),
+    ('newest', 'Newest first'),
+]
+
+
 class TaskFilterForm(forms.Form):
-    """Search and filters. Every field is optional: empty = no filter."""
+    """Search, filters and sort. Every field is optional: empty = no filter."""
 
     # forms.Form (not ModelForm): it is not saved anywhere, it only validates the filters.
     q = forms.CharField(
@@ -65,4 +75,10 @@ class TaskFilterForm(forms.Form):
     status = forms.ChoiceField(
         choices=[('', 'All statuses')] + Status.choices,
         required=False,
+    )
+    # Sort order. Invalid values are ignored and the default (due date) is used.
+    sort = forms.ChoiceField(
+        choices=SORT_CHOICES,
+        required=False,
+        label='Sort by',
     )

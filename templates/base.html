@@ -6,38 +6,54 @@
     <!-- Makes the page fit phone screens (needed for responsive design) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Task Manager{% endblock %}</title>
+    <!-- Small icon shown in the browser tab -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'tasks/img/favicon.svg' %}">
+    <!-- "Poppins" font from Google Fonts (falls back to the system font if offline) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Site styles. The static tag builds the address /static/tasks/css/style.css -->
     <link rel="stylesheet" href="{% static 'tasks/css/style.css' %}">
     <!-- defer = run the script after the HTML has loaded -->
     <script src="{% static 'tasks/js/app.js' %}" defer></script>
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
+    {# url_name = the name of the current page's URL, used to highlight the active menu item #}
+    {% with page=request.resolver_match.url_name %}
     <!-- header: the top bar of every page -->
     <header class="site-header">
-        <a class="brand" href="{% url 'home' %}">Task Manager</a>
+        <a class="brand" href="{% url 'home' %}">
+            <img src="{% static 'tasks/img/favicon.svg' %}" alt="" width="30" height="30">
+            <span>Task<strong>Manager</strong></span>
+        </a>
 
         <!-- nav: the main navigation links -->
         <nav class="main-nav" aria-label="Main">
             {% if user.is_authenticated %}
-                <a href="{% url 'home' %}">Dashboard</a>
-                <a href="{% url 'task_list' %}">My tasks</a>
-                <a href="{% url 'task_create' %}">New task</a>
-                <a href="{% url 'profile' %}">Profile ({{ user.username }})</a>
+                <a href="{% url 'home' %}" class="{% if page == 'home' %}active{% endif %}">Dashboard</a>
+                <a href="{% url 'task_list' %}" class="{% if page == 'task_list' or page == 'task_detail' or page == 'task_update' %}active{% endif %}">My tasks</a>
+                <a href="{% url 'task_create' %}" class="{% if page == 'task_create' %}active{% endif %}">New task</a>
+                <a href="{% url 'history' %}" class="{% if page == 'history' %}active{% endif %}">History</a>
+                <a href="{% url 'profile' %}" class="user-chip {% if page == 'profile' or page == 'profile_edit' or page == 'password_change' or page == 'password_change_done' %}active{% endif %}">
+                    <span class="avatar" aria-hidden="true">{{ user.username|first|upper }}</span>{{ user.username }}
+                </a>
                 <!-- Logout must be a POST form (with CSRF token), not a link -->
                 <form class="logout-form" method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
                     <button type="submit">Log out</button>
                 </form>
             {% else %}
-                <a href="{% url 'login' %}">Log in</a>
-                <a href="{% url 'register' %}">Register</a>
+                <a href="{% url 'login' %}" class="{% if page == 'login' %}active{% endif %}">Log in</a>
+                <a href="{% url 'register' %}" class="nav-cta">Get started</a>
             {% endif %}
         </nav>
     </header>
+    {% endwith %}
 
     <!-- main: the unique content of each page -->
     <main class="container">
-        <!-- One-time messages. message.tags = "success", "error", ... (colours in CSS) -->
+        <!-- One-time messages. message.tags = "success", "error", ... (colours in CSS).
+             app.js adds a close (x) button to each one. -->
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
@@ -49,9 +65,9 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- footer: the bottom of every page -->
+    <!-- footer: the bottom of every page. {% now "Y" %} prints the current year. -->
     <footer class="site-footer">
-        <p>Task Manager · Internship project</p>
+        <p>&copy; {% now "Y" %} TaskManager &middot; Plan it. Do it. Done.</p>
     </footer>
 </body>
 </html>

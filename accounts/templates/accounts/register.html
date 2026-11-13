@@ -1,16 +1,32 @@
 {% extends 'base.html' %}
 
 {% block title %}Register | Task Manager{% endblock %}
+{% block body_class %}auth-page{% endblock %}
 
 {% block content %}
-    <h1>Create an account</h1>
+    <!-- Two panels: colourful welcome on the left, form on the right (stacked on phones) -->
+    <div class="auth-split">
+        <section class="auth-aside">
+            <h2>Get organised today</h2>
+            <p>Create your free account and start managing tasks in under a minute.</p>
+            <ul>
+                <li>✓ Personal, Work and Study categories</li>
+                <li>✓ Priorities and due dates</li>
+                <li>✓ Your tasks stay private to you</li>
+            </ul>
+        </section>
 
-    <form method="post">
-        {% csrf_token %}
-        <!-- Shows every field of the form, with labels and error messages -->
-        {% include 'includes/form_fields.html' %}
-        <button type="submit">Register</button>
-    </form>
+        <section class="auth-card">
+            <h1>Create an account</h1>
+            <p class="muted">You will log in with your email.</p>
 
-    <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+            <form method="post">
+                {% csrf_token %}
+                {% include 'includes/form_fields.html' %}
+                <button type="submit" class="btn-block">Create account</button>
+            </form>
+
+            <p class="auth-switch">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+        </section>
+    </div>
 {% endblock %}

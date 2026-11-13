@@ -53,6 +53,8 @@ The full manual and automated test record is in `docs/Task_Management_Test_Cases
 
 ## Deploy to AWS
 
+Live demo (while the AWS server is running): http://54.253.173.245
+
 See [`deploy/AWS_DEPLOYMENT.md`](deploy/AWS_DEPLOYMENT.md): one EC2 server with Nginx, Gunicorn and PostgreSQL,
 set up by `deploy/setup_server.sh`.
 

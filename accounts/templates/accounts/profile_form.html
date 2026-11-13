@@ -4,12 +4,27 @@
 
 {% block content %}
     <h1>Edit profile</h1>
-    <p>Username: <strong>{{ user.username }}</strong> (cannot be changed)</p>
+    <p class="muted">Username: <strong>{{ user.username }}</strong> (cannot be changed)</p>
 
-    <form method="post">
+    <!-- enctype="multipart/form-data" is REQUIRED for file uploads;
+         without it the browser sends only the file name, not the file. -->
+    <form method="post" enctype="multipart/form-data" class="card form-card">
         {% csrf_token %}
+
+        <div class="profile-top">
+            {% if profile.avatar %}
+                <img class="avatar-large" src="{{ profile.avatar.url }}" alt="Current profile picture">
+            {% else %}
+                <span class="avatar-large avatar-letter" aria-hidden="true">{{ user.username|first|upper }}</span>
+            {% endif %}
+        </div>
+
+        {% include 'includes/form_fields.html' with form=avatar_form %}
         {% include 'includes/form_fields.html' %}
-        <button type="submit">Save changes</button>
-        <a href="{% url 'profile' %}">Cancel</a>
+
+        <div class="actions">
+            <button type="submit">Save changes</button>
+            <a class="btn btn-secondary" href="{% url 'profile' %}">Cancel</a>
+        </div>
     </form>
 {% endblock %}

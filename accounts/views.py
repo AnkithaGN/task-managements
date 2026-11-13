@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------
 # accounts/views.py
-# Registration and profile pages. (Login and logout use Django's
-# built-in views, configured in accounts/urls.py.)
+# Registration and profile pages. (Login, logout and password change
+# use Django's built-in views, configured in accounts/urls.py.)
 # ---------------------------------------------------------------
 
 from django.contrib import messages
@@ -9,7 +9,8 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
-from .forms import ProfileForm, RegisterForm
+from .forms import AvatarForm, ProfileForm, RegisterForm
+from .models import get_profile
 
 
 def register(request):
@@ -36,19 +37,31 @@ def register(request):
 @login_required
 def profile(request):
     # Always the LOGGED-IN user: there is no way to view someone else's profile.
-    return render(request, 'accounts/profile.html')
+    return render(request, 'accounts/profile.html', {'profile': get_profile(request.user)})
 
 
 @login_required
 def profile_edit(request):
+    profile = get_profile(request.user)
     if request.method == 'POST':
-        # instance=request.user -> update the logged-in user, never anyone else.
+        # Two forms on one page. Uploaded files arrive in request.FILES, not request.POST.
         form = ProfileForm(request.POST, instance=request.user)
-        if form.is_valid():
+        avatar_form = AvatarForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid() and avatar_form.is_valid():
+            old_avatar = profile.avatar.name if profile.avatar else ''
             form.save()
+            avatar_form.save()
+            # If the picture was replaced or removed, delete the old file from disk.
+            if old_avatar and old_avatar != profile.avatar.name:
+                profile.avatar.storage.delete(old_avatar)
             messages.success(request, 'Your profile was updated.')
             return redirect('profile')
     else:
         form = ProfileForm(instance=request.user)
+        avatar_form = AvatarForm(instance=profile)
 
-    return render(request, 'accounts/profile_form.html', {'form': form})
+    return render(request, 'accounts/profile_form.html', {
+        'form': form,
+        'avatar_form': avatar_form,
+        'profile': profile,
+    })

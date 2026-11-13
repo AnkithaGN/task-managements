@@ -5,12 +5,22 @@
 {% block content %}
     <h1>My profile</h1>
 
-    <div class="card form-card">
+    <div class="card form-card profile-card">
+        <!-- Profile picture, or a coloured circle with the first letter if there is none -->
+        <div class="profile-top">
+            {% if profile.avatar %}
+                <img class="avatar-large" src="{{ profile.avatar.url }}" alt="Profile picture of {{ user.username }}">
+            {% else %}
+                <span class="avatar-large avatar-letter" aria-hidden="true">{{ user.username|first|upper }}</span>
+            {% endif %}
+            <div>
+                <h2>{{ user.get_full_name|default:user.username }}</h2>
+                <p class="muted">@{{ user.username }}</p>
+            </div>
+        </div>
+
         <!-- dl = "description list": pairs of a label (dt) and its value (dd) -->
         <dl>
-            <dt>Username</dt>
-            <dd>{{ user.username }}</dd>
-
             <dt>Name</dt>
             <dd>{{ user.get_full_name|default:"Not set" }}</dd>
 

@@ -55,6 +55,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # WhiteNoise: serves static files (CSS/JS) when DEBUG=False
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -162,3 +164,43 @@ LOGIN_URL = 'login'
 # Where to go after logging in / logging out.
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
+
+# ---------------------------------------------------------------
+# Uploaded files (profile pictures)
+# ---------------------------------------------------------------
+# MEDIA = files uploaded by users. They are saved in the media/ folder
+# (ignored by Git) and served at /media/...
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# ---------------------------------------------------------------
+# Production (AWS) settings
+# ---------------------------------------------------------------
+# collectstatic copies ALL static files (ours + Django Admin's) into this folder.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise serves the static files efficiently (compressed) when DEBUG=False.
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
+
+# Full addresses allowed to submit forms, e.g. http://13.234.10.20 (comma-separated in .env).
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+
+# Extra protection when running for real (DEBUG=False).
+if not DEBUG:
+    X_FRAME_OPTIONS = 'DENY'                 # the site may not be shown inside another site's frame
+    SECURE_CONTENT_TYPE_NOSNIFF = True       # browsers must trust the declared file type
+    # Only switch these on once the site has HTTPS (a domain + certificate):
+    USE_HTTPS = os.environ.get('DJANGO_HTTPS', 'False') == 'True'
+    SESSION_COOKIE_SECURE = USE_HTTPS        # login cookie sent over HTTPS only
+    CSRF_COOKIE_SECURE = USE_HTTPS
+    SECURE_SSL_REDIRECT = USE_HTTPS          # http:// is redirected to https://
+
+# The app sends no email, so Django's development email backend is fine everywhere.
+SILENCED_SYSTEM_CHECKS = ['mail.E001']

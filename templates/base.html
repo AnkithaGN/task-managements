@@ -35,7 +35,7 @@
                 <a href="{% url 'task_create' %}" class="{% if page == 'task_create' %}active{% endif %}">New task</a>
                 <a href="{% url 'history' %}" class="{% if page == 'history' %}active{% endif %}">History</a>
                 <a href="{% url 'profile' %}" class="user-chip {% if page == 'profile' or page == 'profile_edit' or page == 'password_change' or page == 'password_change_done' %}active{% endif %}">
-                    <span class="avatar" aria-hidden="true">{{ user.username|first|upper }}</span>{{ user.username }}
+                    {% if user.profile.avatar %}<img class="avatar avatar-img" src="{{ user.profile.avatar.url }}" alt="">{% else %}<span class="avatar" aria-hidden="true">{{ user.username|first|upper }}</span>{% endif %}{{ user.username }}
                 </a>
                 <!-- Logout must be a POST form (with CSRF token), not a link -->
                 <form class="logout-form" method="post" action="{% url 'logout' %}">

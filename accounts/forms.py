@@ -8,7 +8,13 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
+from .models import Profile
+
 User = get_user_model()
+
+# Largest picture we accept (2 MB). Bigger files are refused with a message.
+MAX_AVATAR_SIZE = 2 * 1024 * 1024
+ALLOWED_IMAGE_TYPES = {'JPEG', 'PNG', 'WEBP', 'GIF'}
 
 
 def email_taken(email, exclude_pk=None):
@@ -73,3 +79,26 @@ class ProfileForm(forms.ModelForm):
         if email_taken(email, exclude_pk=self.instance.pk):
             raise forms.ValidationError('An account with this email already exists.')
         return email
+
+
+class AvatarForm(forms.ModelForm):
+    """Upload, replace or remove the profile picture."""
+
+    class Meta:
+        model = Profile
+        fields = ('avatar',)
+        labels = {'avatar': 'Profile picture'}
+        help_texts = {'avatar': 'JPG, PNG, WEBP or GIF, up to 2 MB.'}
+        # accept="image/*" makes the file picker show images first (the server still checks).
+        widgets = {'avatar': forms.ClearableFileInput(attrs={'accept': 'image/*'})}
+
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get('avatar')
+        # Only check NEW uploads (an existing saved picture has no .image attribute).
+        if avatar and hasattr(avatar, 'image'):
+            if avatar.size > MAX_AVATAR_SIZE:
+                raise forms.ValidationError('The picture is too large. Please choose one up to 2 MB.')
+            # ImageField already proved it is a real image; also check the format.
+            if (avatar.image.format or '').upper() not in ALLOWED_IMAGE_TYPES:
+                raise forms.ValidationError('Please upload a JPG, PNG, WEBP or GIF image.')
+        return avatar

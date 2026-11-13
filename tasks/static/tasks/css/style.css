@@ -413,3 +413,18 @@ dl dd { margin: 0 0 0.9rem; font-size: 1.05rem; }
 .act-badge-completed { background: #d1fae5; color: #047857; }
 .act-badge-reopened { background: #fef3c7; color: #b45309; }
 .act-badge-deleted { background: #ffe4e6; color: #be123c; }
+
+/* ---------- Profile picture ---------- */
+.avatar-img { object-fit: cover; padding: 0; }
+.profile-top { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+.profile-top h2 { margin: 0; }
+.profile-top p { margin: 0; }
+.avatar-large {
+    width: 96px; height: 96px; border-radius: 50%; object-fit: cover; flex: 0 0 96px;
+    box-shadow: 0 0 0 4px #fff, 0 0 0 7px #c4b5fd;
+}
+.avatar-letter {
+    display: grid; place-items: center; background: var(--gradient);
+    color: #fff; font-size: 2.4rem; font-weight: 700;
+}
+input[type="file"] { font: inherit; max-width: 100%; }
